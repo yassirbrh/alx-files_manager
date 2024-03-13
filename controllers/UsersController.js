@@ -18,7 +18,7 @@ async function postNew(req, res) {
       throw new Error('Missing password');
     }
 
-    const userExists = await dbClient.findOne('users', 'email', email);
+    const userExists = await dbClient.findOne('users', { email });
     if (userExists) {
       throw new Error('Already exist');
     }

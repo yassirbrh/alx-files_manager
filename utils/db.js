@@ -25,9 +25,9 @@ class DBClient {
     return this.client.db().collection('files').countDocuments();
   }
 
-  async findOne(collectionName, key, value) {
+  async findOne(collectionName, data) {
     const collection = this._db.collection(collectionName);
-    return collection.findOne({ key: value });
+    return collection.findOne(data);
   }
 
   async insertOne(collectionName, data) {
