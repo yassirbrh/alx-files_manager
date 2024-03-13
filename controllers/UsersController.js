@@ -1,6 +1,8 @@
 #!/usr/bin/node
 
+import { ObjectID } from 'mongodb';
 import dbClient from '../utils/db';
+import redisClient from '../utils/redis';
 
 const crypto = require('crypto');
 
@@ -34,4 +36,22 @@ async function postNew(req, res) {
   }
 }
 
-module.exports = { postNew };
+async function getMe(req, res) {
+  const token = req.headers['x-token'];
+
+  try {
+    const userId = await redisClient.get(`auth_${token}`);
+    if (!userId) {
+      throw new Error('Unauthorized');
+    }
+    const user = await dbClient.findOne('users', { _id: ObjectID(userId) });
+    if (!user) {
+      throw new Error('Unauthorized');
+    }
+    res.status(201).json({ id: userId, email: user.email });
+  } catch (error) {
+    res.status(401).json({ error: error.message });
+  }
+}
+
+module.exports = { postNew, getMe };
