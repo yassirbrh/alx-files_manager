@@ -1,3 +1,5 @@
+#!/usr/bin/node
+
 import loadRoutes from './routes/index';
 
 const express = require('express');
