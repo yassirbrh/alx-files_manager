@@ -1,5 +1,8 @@
 #!/usr/bin/node
 
+/* eslint-disable import/no-named-as-default */
+/* eslint-disable no-unused-vars */
+
 import { ObjectID } from 'mongodb';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
