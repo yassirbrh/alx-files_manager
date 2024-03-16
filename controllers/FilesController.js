@@ -86,4 +86,8 @@ async function postUpload(req, res) {
   }
 }
 
-module.exports = { postUpload };
+async function getShow(req, res) {
+
+}
+
+module.exports = { postUpload, getShow };
