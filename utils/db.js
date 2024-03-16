@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectID } from 'mongodb';
 
 class DBClient {
   constructor() {
@@ -31,6 +31,24 @@ class DBClient {
   async insertOne(collectionName, data) {
     const collection = this._db.collection(collectionName);
     return collection.insertOne(data);
+  }
+
+  async listFiles(data) {
+    const { userId, page } = data;
+    const { parentId } = data;
+    let pipeline = [];
+    if (parentId === undefined) {
+      pipeline = [
+        { $match: { userId: ObjectID(userId) } },
+        { $facet: { data: [{ $skip: page * 20 }, { $limit: 20 }] } },
+      ];
+    } else {
+      pipeline = [
+        { $match: { userId: ObjectID(userId), parentId } },
+        { $facet: { data: [{ $skip: page * 20 }, { $limit: 20 }] } },
+      ];
+    }
+    return this._db.collection('files').aggregate(pipeline).toArray();
   }
 }
 

@@ -6,6 +6,7 @@ import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
+import formatData from '../utils/format';
 
 const crypto = require('crypto');
 
@@ -87,7 +88,37 @@ async function postUpload(req, res) {
 }
 
 async function getShow(req, res) {
+  const token = req.headers['x-token'];
 
+  const userId = await redisClient.get(`auth_${token}`);
+  if (!userId) {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+  const user = await dbClient.findOne('users', { _id: ObjectID(userId) });
+  if (!user) {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const fileId = req.params.id;
+  const file = await dbClient.findOne('files', { _id: ObjectID(fileId), userId: ObjectID(userId) });
+
+  if (!file) {
+    res.status(404).json({ error: 'Not found' });
+  }
+  delete file.localPath;
+  res.json(formatData([file])[0]);
 }
 
-module.exports = { postUpload, getShow };
+async function getIndex(req, res) {
+  const token = req.headers['x-token'];
+
+  const userId = await redisClient.get(`auth_${token}`);
+  if (!userId) {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+  const { parentId, page = 0 } = req.query;
+  const data = await dbClient.listFiles({ userId, parentId: ObjectID(parentId), page });
+  res.json(formatData(data[0].data));
+}
+
+module.exports = { postUpload, getShow, getIndex };
