@@ -33,6 +33,11 @@ class DBClient {
     return collection.insertOne(data);
   }
 
+  async updateOne(collectionName, filterData, updateData) {
+    const collection = this._db.collection(collectionName);
+    return collection.updateOne(filterData, updateData);
+  }
+
   async listFiles(data) {
     const { userId, page } = data;
     const { parentId } = data;
