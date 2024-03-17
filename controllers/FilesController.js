@@ -8,6 +8,7 @@ import mime from 'mime-types';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 import formatData from '../utils/format';
+import Queue from 'bull';
 
 const crypto = require('crypto');
 
@@ -82,6 +83,10 @@ async function postUpload(req, res) {
       isPublic,
       localPath,
     });
+    if (type === 'image') {
+      const fileQueue = new Queue('fileQueue');
+      fileQueue.add({ userId, fileId: result.insertedId });
+    }
     res.status(201).json({
       id: result.insertedId, userId, name, type, isPublic, parentId,
     });
@@ -169,6 +174,14 @@ async function getFile(req, res) {
   }
   if (file.type === 'folder') {
     res.status(400).json({ error: 'A folder doesn\'t have content' });
+  }
+  if (file.type === 'image') {
+    if (size) {
+      if (['500', '250', '100'].indexOf(size) === -1) {
+        return res.status(400).json({ error: 'Not found' });
+      }
+      file.localPath = `${file.localPath}_${size}`;
+    }
   }
   if (!fs.existsSync(file.localPath)) {
     res.status(404).json({ error: 'Not found' });
