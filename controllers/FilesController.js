@@ -4,6 +4,7 @@
 import { ObjectID } from 'mongodb';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import mime from 'mime-types';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 import formatData from '../utils/format';
@@ -155,6 +156,29 @@ async function putUnpublish(req, res) {
   res.json(formatData([updatedFile])[0]);
 }
 
+async function getFile(req, res) {
+  const fileId = req.params.id;
+  const token = req.headers['x-token'];
+  const file = await dbClient.findOne('files', { _id: ObjectID(fileId) });
+  if (!file || !file.isPublic) {
+    res.status(404).json({ error: 'Not found' });
+  }
+  const userId = await redisClient.get(`auth_${token}`);
+  if (!userId || file.userId.toString() !== userId) {
+    res.status(404).json({ error: 'Not found' });
+  }
+  if (file.type === 'folder') {
+    res.status(400).json({ error: 'A folder doesn\'t have content' });
+  }
+  if (!fs.existsSync(file.localPath)) {
+    res.status(404).json({ error: 'Not found' });
+  }
+  const fileMimeType = mime.lookup(file.name);
+  const data = fs.readFileSync(file.localPath);
+  res.set('Content-Type', fileMimeType);
+  res.end(data);
+}
+
 module.exports = {
-  postUpload, getShow, getIndex, putPublish, putUnpublish,
+  postUpload, getShow, getIndex, putPublish, putUnpublish, getFile,
 };
