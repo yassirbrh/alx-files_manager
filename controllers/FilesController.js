@@ -155,4 +155,6 @@ async function putUnpublish(req, res) {
   res.json(formatData([updatedFile])[0]);
 }
 
-module.exports = { postUpload, getShow, getIndex, putPublish, putUnpublish };
+module.exports = {
+  postUpload, getShow, getIndex, putPublish, putUnpublish,
+};
