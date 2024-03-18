@@ -4,6 +4,7 @@
 import { ObjectID } from 'mongodb';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
+import Queue from 'bull';
 
 const crypto = require('crypto');
 
@@ -31,6 +32,15 @@ async function postNew(req, res) {
 
     const user = await dbClient.insertOne('users', { email, password: hashPwd });
 
+    const userQueue = new Queue('userQueue');
+    userQueue.on('global:completed', (jobId, result) => { 
+      console.log(`Job ${jobId} completed!`);
+      userQueue.getJob(jobId).then((job) => {
+        console.log(`'Welcome email' has been sent to the user ${job.data.userId} !!`);
+        job.remove();
+      });
+    });
+    userQueue.add({ userId: user.insertedId });
     res.status(201).json({ id: user.insertedId, email });
   } catch (error) {
     res.status(400).json({ error: error.message });

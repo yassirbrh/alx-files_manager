@@ -61,6 +61,7 @@ fileQueue.process((job, done) => {
 
 userQueue.process(async (job, done) => {
   const { userId } = job.data;
+
   try {
     if (userId === undefined) {
       throw new Error('Missing UserId');
